@@ -29,3 +29,7 @@ Feedback and contributions are welcome. Please open an issue on the GitHub repos
 ## License
 
 This extension is released under the MIT License. See the LICENSE file for more details.
+
+## Privacy Policy
+
+This extension requires certain access to the page you run it on, but it does not collect any information AT ALL and NEVER WILL. Chrome webstore requires a privacy policy be in place and here you go.
