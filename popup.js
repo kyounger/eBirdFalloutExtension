@@ -7,13 +7,8 @@ if (typeof browser == "undefined") {
   globalThis.browser = chrome;
 }
 
-function convertTargets() {
-
-  console.log('convertTargets');
-
-  function GetTargetsData() {
-    console.log('GetTargetsData');
-
+function fallout() {
+  function getTargetsData() {
     const speciesData = [];
     const sections = document.querySelectorAll('section[aria-labelledby]:not([aria-labelledby="hybrids"])');
 
@@ -47,7 +42,69 @@ function convertTargets() {
     return speciesData;
   }
 
-  function ConvertToCSV(data) {
+  function getAlertsData() {
+    // Find all observation containers
+    const observationContainers = document.querySelectorAll('.Observation');
+    const observationsData = [];
+
+    // Iterate over each observation container
+    observationContainers.forEach(container => {
+      // Extract species name and scientific name
+      const speciesName = container.querySelector('.Observation-species .Heading-main').textContent.trim();
+      const scientificName = container.querySelector('.Observation-species .Heading-sub').textContent.trim();
+
+      // Extract number observed
+      const numberObservedText = container.querySelector('.Observation-numberObserved').textContent.trim();
+      const numberObserved = numberObservedText.match(/\d+/) ? numberObservedText.match(/\d+/)[0] : 'Unknown';
+
+      // Extract date
+      const observationDate = container.querySelector('.Observation-meta a[title="Checklist"]').textContent.trim();
+
+      // Extract and split location
+      const locationLink = container.querySelector('.Observation-meta a[target="_blank"]');
+      const fullLocation = locationLink ? locationLink.textContent.trim() : 'Unknown, Unknown, Unknown, Unknown';
+      let [country, state, county, ...locationNameParts] = fullLocation.split(',').reverse().map(part => part.trim());
+      const locationName = locationNameParts.reverse().join(','); // Join the remaining parts to form the location name
+      const gpsCoordinates = locationLink ? locationLink.title.split(': ')[1] : 'Unknown, Unknown';
+      const [latitude, longitude] = gpsCoordinates.split(',');
+
+      // Extract observer's name
+      const observerNameSpan = container.querySelector('.Observation-meta .GridFlex-cell span:not(.is-visuallyHidden)');
+      const observerName = observerNameSpan ? observerNameSpan.textContent.trim() : 'Unknown';
+
+      // Extract checklist URL
+      const checklistLink = container.querySelector('.Observation-meta a[title="Checklist"]');
+      const checklistUrl = checklistLink ? checklistLink.href : 'Unknown';
+
+      // Extract confirmed tag
+      const confirmedTagElement = container.querySelector('.Observation-tags strong');
+      const confirmedTag = confirmedTagElement ? confirmedTagElement.textContent.trim() : 'Unknown';
+
+      // Construct JSON object for the current observation
+      const observationData = {
+        speciesName,
+        scientificName,
+        numberObserved,
+        observationDate,
+        confirmedTag,
+        locationName,
+        county,
+        state,
+        country,
+        observerName,
+        latitude,
+        longitude,
+        checklistUrl
+      };
+
+      // Add the current observation's data to the array
+      observationsData.push(observationData);
+    });
+
+    return observationsData;
+  }
+
+  function convertToCSV(data) {
     const csvRows = [];
     const headers = Object.keys(data[0]);
     csvRows.push(headers.join(','));
@@ -62,6 +119,7 @@ function convertTargets() {
 
     return csvRows.join('\n');
   }
+
   function downloadCSV(csvData, filename) {
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -72,6 +130,7 @@ function convertTargets() {
     link.click();
     document.body.removeChild(link);
   }
+
   function getCurrentDateTime() {
     const now = new Date();
     const year = now.getFullYear();
@@ -84,20 +143,31 @@ function convertTargets() {
     return `${year}-${month}-${day}-${hours}${minutes}${seconds}`;
   }
 
-  const targetsData = GetTargetsData();
-  const csvData = ConvertToCSV(targetsData);
   const datetimeString = getCurrentDateTime();
-  const filename = `targets-${datetimeString}.csv`;
+  let data;
+  let filename;
 
-  downloadCSV(csvData,filename);
-
+  if (window.location.pathname == '/alert/summary') {
+    console.log('Alerts page');
+    data = getAlertsData();
+    filename = `alerts-${datetimeString}.csv`;
+  } else if (window.location.pathname == '/targets') {
+    console.log('Targets page');
+    data = getTargetsData();
+    filename = `targets-${datetimeString}.csv`;
+  } else {
+    alert('This page is not supported');
+    return;
+  }
+  const csvData = convertToCSV(data);
+  downloadCSV(csvData, filename);
 }
 
-document.getElementById('convertTargetsBtn').addEventListener('click', () => {
+document.getElementById('falloutBtn').addEventListener('click', () => {
   browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     browser.scripting.executeScript({
       target: { tabId: tabs[0].id },
-      func: convertTargets,
+      func: fallout,
       injectImmediately: true,
     });
   });
