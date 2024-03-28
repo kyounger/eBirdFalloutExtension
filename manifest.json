@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "eBird Fallout",
-  "version": "0.3",
+  "version": "0.4",
   "description": "eBird is already pretty great. But a few pages have data that I need to download. This extension lets you do that.",
   "permissions": [
     "scripting",
