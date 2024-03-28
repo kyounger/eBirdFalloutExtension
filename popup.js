@@ -24,6 +24,7 @@ function fallout() {
       listItems.forEach((li) => {
         const name = li.querySelector('.SpecimenHeader').textContent.trim();
         const link = 'https://ebird.org' + li.querySelector('a').getAttribute('href');
+        const mapUrl = 'https://ebird.org' + li.querySelector('.ResultsStats-action a').getAttribute('href');
         const frequencyTitle = li.querySelector('.ResultsStats-stats').title;
         const frequency = frequencyTitle.substring(0, frequencyTitle.indexOf('%')).trim();
 
@@ -31,6 +32,7 @@ function fallout() {
           name,
           frequency,
           link,
+          mapUrl,
           category,
           queryRegion,
           queryBegMonth,
