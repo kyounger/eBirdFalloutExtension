@@ -51,6 +51,9 @@ function fallout() {
 
     // Iterate over each observation container
     observationContainers.forEach(container => {
+      // Extract observation ID
+      const observationId = container.id.split('-')[1];
+
       // Extract species name and scientific name
       const speciesName = container.querySelector('.Observation-species .Heading-main').textContent.trim();
       const scientificName = container.querySelector('.Observation-species .Heading-sub').textContent.trim();
@@ -84,6 +87,7 @@ function fallout() {
 
       // Construct JSON object for the current observation
       const observationData = {
+        observationId,
         speciesName,
         scientificName,
         numberObserved,
