@@ -126,6 +126,58 @@ function fallout() {
     return csvRows.join('\n');
   }
 
+  function getRegionList() {
+    const birdList = [];
+    const url = new URL(window.location.href);
+    const region = url.pathname.split('/')[2];
+
+    const sections = document.querySelectorAll('.BirdList-list section');
+
+    sections.forEach(section => {
+      const sectionType = section.querySelector('h3').textContent.trim();
+      const birdItems = section.querySelectorAll('.BirdList-list-list-item.countable');
+
+      birdItems.forEach(item => {
+        const speciesNameElement = item.querySelector('.Obs-species .Species-common');
+        const speciesName = speciesNameElement ? speciesNameElement.textContent.trim() : '';
+        const speciesLinkElement = item.querySelector('.Obs-species a');
+        const speciesLink = speciesLinkElement ? speciesLinkElement.href : '';
+
+        const countElement = item.querySelector('.Obs-count span[title]');
+        const count = countElement ? countElement.textContent.trim() : '';
+
+        const dateElement = item.querySelector('.Obs-date time');
+        const date = dateElement ? dateElement.textContent.trim() : '';
+        const dateLinkElement = item.querySelector('.Obs-date a');
+        const dateLink = dateLinkElement ? dateLinkElement.href : '';
+
+        const observerElement = item.querySelector('.Obs-observer a') || item.querySelector('.Obs-observer span');
+        const observer = observerElement ? observerElement.textContent.trim() : '';
+
+        const locationElement = item.querySelector('.Obs-location-name a') || item.querySelector('.Obs-location-name span');
+        const location = locationElement ? locationElement.textContent.trim() : '';
+
+        const sensitiveElement = item.querySelector('.Sensitive-badge');
+        const sensitive = sensitiveElement ? true : false;
+
+        birdList.push({
+          region,
+          sectionType,
+          speciesName,
+          speciesLink,
+          count,
+          date,
+          dateLink,
+          observer,
+          location,
+          sensitive
+        });
+      });
+    });
+
+    return birdList;
+  }
+
   function downloadCSV(csvData, filename) {
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -150,6 +202,7 @@ function fallout() {
   }
 
   const datetimeString = getCurrentDateTime();
+  const url = new URL(window.location.href);
   let data;
   let filename;
 
@@ -161,6 +214,46 @@ function fallout() {
     console.log('Targets page');
     data = getTargetsData();
     filename = `targets-${datetimeString}.csv`;
+  } else if (/^\/region\/.*\/bird-list$/.test(window.location.pathname)) {
+    console.log('Region bird list page');
+
+    let listMetric;
+    switch (url.searchParams.get('rank')) {
+      case 'lrec':
+        listMetric = 'firstObserved';
+        break;
+      case 'hc':
+        listMetric = 'highCount';
+        break;
+      default:
+        listMetric = 'lastObserved';
+        break;
+    }
+    
+    let timePeriod;
+    switch (url.searchParams.get('yr')) {
+      case 'cur':
+        timePeriod = new Date().getFullYear().toString();
+        break;
+      case 'curM':
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        timePeriod = `${year}${month}`;
+        break;
+      case null:
+        timePeriod = 'allYears';
+        break;
+      default:
+        timePeriod = url.searchParams.get('yr');
+        break;
+    }
+
+    region = url.pathname.split('/')[2];
+
+    console.log(`Region: ${region}, List metric: ${listMetric}, Time period: ${timePeriod}`);
+    data = getRegionList();
+    filename = `regionList-${region}-${listMetric}-${datetimeString}.csv`;
   } else {
     alert('This page is not supported');
     return;
